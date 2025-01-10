@@ -1,10 +1,5 @@
-from langchain_core.messages import AIMessage
 from langchain_core.tools import tool
-
-from langgraph.prebuilt import ToolNode
 import subprocess
-
-
 
 def execute_command(command: str) -> str:
     """
@@ -25,3 +20,8 @@ def execute_commands(commands: list) -> list:
     :return: A list of tuples containing the command and its execution result.
     """
     return [(command, execute_command(command)) for command in commands]
+
+
+
+
+

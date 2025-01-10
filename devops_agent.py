@@ -2,15 +2,18 @@
 
 from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI
-from tools import execute_command, execute_commands
+from tools import  execute_commands
 from langgraph.prebuilt import ToolNode
-from langgraph.graph import Graph
-from typing import TypedDict, Annotated, Sequence
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
 from langgraph.graph import StateGraph, MessagesState, START, END
+from langgraph.prebuilt import ToolNode
+from langchain_core.tools import tool
+from langgraph.types import Command
+from typing import Annotated
+
 
 # Initialize the Anthropic model
-model = ChatAnthropic(model="claude-3-opus-20240229", temperature=0)
+#model = ChatAnthropic(model="claude-3-opus-20240229", temperature=0)
+model = ChatOpenAI(model="gpt-4o", temperature=0)
 
 # Configure tools
 tools = [execute_commands]
@@ -44,3 +47,13 @@ envflow.add_conditional_edges("agent", should_continue, ["tools", END])
 envflow.add_edge("tools", "agent")
 
 env_agent = envflow.compile()
+
+@tool
+def route_to_devops_agent(command_str: str):
+    """
+    Routes a command to the devops agent
+    Handles tasks related to environment setup, CI/CD, and infrastructure management.
+    command_str: Command to tool to execute in natural language 
+    """
+    response = env_agent.invoke({"messages": [{"role": "human", "content": command_str}]})
+    return  Command(update={"messages": response["messages"][-1]}, goto=env_agent)
