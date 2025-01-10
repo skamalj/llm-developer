@@ -2,7 +2,7 @@
 
 from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI
-from tools import  execute_commands
+from tools import  execute_os_commands, execute_conda_env_commands
 from langgraph.prebuilt import ToolNode
 from langgraph.graph import StateGraph, MessagesState, START, END
 from langgraph.prebuilt import ToolNode
@@ -16,7 +16,7 @@ from typing import Annotated
 model = ChatOpenAI(model="gpt-4o", temperature=0)
 
 # Configure tools
-tools = [execute_commands]
+tools = [execute_os_commands, execute_conda_env_commands]
 
 # Create tool node for LangGraph
 tool_node = ToolNode(tools=tools)
@@ -56,4 +56,4 @@ def route_to_devops_agent(command_str: str):
     command_str: Command to tool to execute in natural language 
     """
     response = env_agent.invoke({"messages": [{"role": "human", "content": command_str}]})
-    return  Command(update={"messages": response["messages"][-1]}, goto=env_agent)
+    return response["messages"][-1]
