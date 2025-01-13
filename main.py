@@ -52,6 +52,7 @@ Be precise and structured in your instructions. Log progress at every step.
         messages.insert(0, system_msg)
 
     response = supervisor.invoke(messages)
+    print("\n####################\n",messages, "\n#################\n")
     return {"messages": [response]}
 
 # Define the Supervisor Agent's StateGraph
@@ -75,7 +76,7 @@ supervisor_agent = supervisor_graph.compile()
 input_message = {
     "messages": [
         ("human", """
-         create a conda environment 'new-env' with python 3.11 and install pip in it.
+         create a conda environment 'new-env2' with python 3.11 and install pip in it.
          Then install langgraph package in it. 
          """)
     ]
@@ -83,9 +84,9 @@ input_message = {
 
 # Stream and process the output
 try:
-    for chunk in supervisor_agent.stream(input_message, subgraphs=False, stream_mode="values"):
+    for chunk in supervisor_agent.stream(input_message, subgraphs=True, stream_mode="values"):
         # Extract the last message from the chunk
-        message = chunk["messages"][-1]
+        message = chunk[1]["messages"][-1]
         if isinstance(message, tuple):
             print(message)
         else:
