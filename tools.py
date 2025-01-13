@@ -9,7 +9,7 @@ def execute_command(command: str, capture_output: bool = False) -> str:
     :param capture_output: Boolean to indicate if you need commands output along with status or not.  Command outputs can be expensive to capture, so be cautious and use only when needed.
     :return: The standard output of the command as a stripped string.
     """
-    result = subprocess.run(command, shell=True, capture_output=capture_output, text=True, timeout=60)
+    result = subprocess.run(command, shell=True, capture_output=capture_output, text=True, timeout=20)
     return result
 
 @tool
@@ -33,6 +33,22 @@ def execute_conda_env_commands(env_name: str, commands: list, capture_output: bo
     """
     env_prefix = f'conda run -n {env_name} '
     return [(command, execute_command(env_prefix + command, capture_output)) for command in commands]
+
+@tool
+def save_file(file_path: str, content: str) -> str:
+    """
+    Saves the given content to the specified file.
+
+    :param file_path: Full path, including base directory,  of the file where the content should be saved.
+    :param content: The content to save in the file.
+    :return: A message indicating success or the error encountered.
+    """
+    try:
+        with open(file_path, 'w') as file:
+            file.write(content)
+        return f"File saved successfully at {file_path}"
+    except Exception as e:
+        return f"Error saving file at {file_path}: {str(e)}"
 
 
 

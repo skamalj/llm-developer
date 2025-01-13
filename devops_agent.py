@@ -56,4 +56,4 @@ def route_to_devops_agent(command_str: str):
     command_str: Command to tool to execute in natural language 
     """
     response = env_agent.invoke({"messages": [{"role": "human", "content": command_str}]})
-    return response["messages"][-1]
+    return response["messages"][-1].content
