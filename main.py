@@ -74,12 +74,12 @@ supervisor_graph.add_edge("devops_agent", "supervisor")
 
 # Compile the Supervisor Agent
 supervisor_agent = supervisor_graph.compile()
-
+    
 # Example task for the supervisor agent
 input_message = {
     "messages": [
         ("human", """
-write a simple calculator program in python. Create the code in /home/kamal/dev/calculator
+Write a code for  instructions specified in /home/kamal/dev/llms/langgraph/llm-developer/BaseStore_def.txt. Create the code in /home/kamal/dev/cosmos_store_test
          """)
     ]
 }

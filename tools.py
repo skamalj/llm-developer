@@ -9,7 +9,7 @@ def execute_command(command: str, capture_output: bool = False) -> str:
     :param capture_output: Boolean to indicate if you need commands output along with status or not.  Command outputs can be expensive to capture, so be cautious and use only when needed.
     :return: The standard output of the command as a stripped string.
     """
-    result = subprocess.run(command, shell=True, capture_output=capture_output, text=True, timeout=60)
+    result = subprocess.run(command, shell=True, stdout=subprocess.PIPE if capture_output else subprocess.DEVNULL, text=True, timeout=20, stderr=subprocess.PIPE)
     return result
 
 @tool
@@ -50,7 +50,18 @@ def save_file(file_path: str, content: str) -> str:
     except Exception as e:
         return f"Error saving file at {file_path}: {str(e)}"
 
-
+@tool
+def read_file(file_path: str) -> str:
+    """
+    Reads a given file and returns it's content
+    :param file_path: Full path of file to read
+    :return: Files content
+    """
+    try:
+        with open(file_path, 'r') as file:
+            return file.read()
+    except Exception as e:
+        return str(e)
 
 
 

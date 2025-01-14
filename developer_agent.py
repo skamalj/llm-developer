@@ -2,7 +2,7 @@
 
 from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI
-from tools import  execute_os_commands, execute_conda_env_commands, save_file
+from tools import  execute_os_commands, execute_conda_env_commands, save_file, read_file
 from langgraph.prebuilt import ToolNode
 from langgraph.graph import StateGraph, MessagesState, START, END
 from langgraph.prebuilt import ToolNode
@@ -17,7 +17,7 @@ from langchain.schema import SystemMessage
 model = ChatOpenAI(model="gpt-4o", temperature=0)
 
 # Configure tools
-tools = [execute_os_commands, execute_conda_env_commands, save_file]
+tools = [execute_os_commands, execute_conda_env_commands, save_file, read_file]
 
 # Create tool node for LangGraph
 tool_node = ToolNode(tools=tools)
@@ -58,12 +58,13 @@ devflow.add_edge("tools", "agent")
 dev_agent = devflow.compile()
 
 @tool
-def route_to_developer_agent(command_str: str, work_dir: str):
+def route_to_developer_agent(command_str: str, work_dir: str, code_spec_file: str):
     """
     Routes a command to the developer agent
     Handles tasks related to code development and testing.
-    command_str: Command to tool to execute in natural language 
-    work_dir: Work directory for this project
+    :param command_str: Command to tool to execute in natural language 
+    :param work_dir: Work directory for this project
+    :param code_spec_file: File path where code specification is detailed.
     """
-    response = dev_agent.invoke({"messages": [{"role": "human", "content": f'{command_str}. Your work directory is {work_dir}'}]})
+    response = dev_agent.invoke({"messages": [{"role": "human", "content": f'{command_str}. Your work directory is {work_dir} and code specification are in {code_spec_file}'}]})
     return response["messages"][-1].content

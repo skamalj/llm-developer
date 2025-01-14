@@ -1,0 +1,116 @@
+### Task: Implement `BaseStore` for Cosmos DB
+
+**Objective**: Implement the `BaseStore` class for Cosmos DB using the Azure Cosmos DB Python SDK.
+
+**Specifications**:  
+- Use the following interfaces from the `langgraph` package:  
+  ```python
+  from langgraph.store.base import BaseStore, Item, PutOp, Result, SearchItem, NamespacePath, Literal, Op, SearchOp
+
+- Implement all methods of BaseStore, which are described below, , including both synchronous and asynchronous versions
+- Use Cosmos DB features such as containers, partition keys, and queries to map these methods effectively.
+- Namespace is passed as a tuple of values ('a', 'b', 'c'), you must convert it to suitable string while saving and back to tuple while reading and returning as Item.
+- created_at must be set only during creation and must not change for updates. This is important when implementing 'put' method
+- updated_at must be updated at every item update. It will be same as created_at during creation.
+- implement methods in this order put, aput, delete, adelete, get, aget and then rest in any order.
+- Read cosmosdb credentials from environment - COSMOSDB_KEY and COSMOSDB_ENDPOINT
+- Enable creation of cosmosdb database and container if it does not exists.
+- For search and list methods - sync and async both - only suopport prefix search.
+- Create test cases for all methods and use pytest library for tests
+- Create this as PyPi package 'langgraph_store_cosmosdb' using pyproject.toml
+
+### BaseStore Methods
+
+1. **`batch(ops: Iterable[Op]) -> list[Result]`**  
+   Executes multiple operations synchronously in a single batch.  
+   - **Parameters**:
+     - `ops`: An iterable of `Op` objects specifying the operations to perform.
+   - **Returns**: A list of `Result` objects representing the outcome of each operation.
+
+2. **`abatch(ops: Iterable[Op]) -> list[Result]`**  
+   Executes multiple operations asynchronously in a single batch.  
+   - **Parameters**:
+     - `ops`: An iterable of `Op` objects specifying the operations to perform.
+   - **Returns**: A list of `Result` objects representing the outcome of each operation.
+
+3. **`get(namespace: tuple[str, ...], key: str) -> Optional[Item]`**  
+   Retrieves a single item synchronously from the store.  
+   - **Parameters**:
+     - `namespace`: A tuple representing the hierarchical path to the item's location.
+     - `key`: The unique identifier of the item within the namespace.
+   - **Returns**: An `Item` object if the key exists, otherwise `None`.
+
+4. **`aget(namespace: tuple[str, ...], key: str) -> Optional[Item]`**  
+   Retrieves a single item asynchronously from the store.  
+   - **Parameters**:
+     - `namespace`: A tuple representing the hierarchical path to the item's location.
+     - `key`: The unique identifier of the item within the namespace.
+   - **Returns**: An `Item` object if the key exists, otherwise `None`.
+
+5. **`search(namespace_prefix: tuple[str, ...], query: Optional[str] = None, filter: Optional[dict[str, Any]] = None, limit: int = 10, offset: int = 0) -> list[SearchItem]`**  
+   Performs a synchronous search within a namespace prefix.  
+   - **Parameters**:
+     - `namespace_prefix`: The namespace prefix to search within.
+     - `query`: An optional query string to filter results.
+     - `filter`: An optional dictionary of filters to apply.
+     - `limit`: Maximum number of items to return (default: 10).
+     - `offset`: Number of items to skip (default: 0).
+   - **Returns**: A list of `SearchItem` objects matching the search criteria.
+
+6. **`asearch(namespace_prefix: tuple[str, ...], query: Optional[str] = None, filter: Optional[dict[str, Any]] = None, limit: int = 10, offset: int = 0) -> list[SearchItem]`**  
+   Performs an asynchronous search within a namespace prefix.  
+   - **Parameters**: Same as `search`.  
+   - **Returns**: A list of `SearchItem` objects matching the search criteria.
+
+7. **`put(namespace: tuple[str, ...], key: str, value: dict[str, Any], index: Optional[Union[bool, list[str]]] = None)`**  
+   Stores or updates an item synchronously in the store.  
+   - **Parameters**:
+     - `namespace`: The hierarchical path to the item's location.
+     - `key`: The unique identifier of the item.
+     - `value`: A dictionary representing the item's content.
+     - `index`: Optional indexing settings (boolean or a list of indexed fields).
+   - **Returns**: None.
+
+8. **`aput(namespace: tuple[str, ...], key: str, value: dict[str, Any], index: Optional[Union[bool, list[str]]] = None)`**  
+   Stores or updates an item asynchronously in the store.  
+   - **Parameters**: Same as `put`.  
+   - **Returns**: None.
+
+9. **`delete(namespace: tuple[str, ...], key: str)`**  
+   Deletes an item synchronously from the store.  
+   - **Parameters**:
+     - `namespace`: The hierarchical path to the item's location.
+     - `key`: The unique identifier of the item to delete.
+   - **Returns**: None.
+
+10. **`adelete(namespace: tuple[str, ...], key: str)`**  
+    Deletes an item asynchronously from the store.  
+    - **Parameters**: Same as `delete`.  
+    - **Returns**: None.
+
+11. **`list_namespaces(*, prefix: Optional[NamespacePath] = None, suffix: Optional[NamespacePath] = None, max_depth: Optional[int] = None, limit: int = 100, offset: int = 0) -> list[tuple[str, ...]]`**  
+    Lists namespaces synchronously based on specified match conditions.  
+    - **Parameters**:
+      - `prefix`: Prefix search for namespaces.
+      - `suffix`: Suffix search for namespaces.
+      - `max_depth`: Optional maximum depth to traverse.
+      - `limit`: Maximum number of results to return (default: 10).
+      - `offset`: Number of results to skip (default: 0).
+    - **Returns**: A list of `NamespacePath` objects.
+
+12. **`alist_namespaces(*, prefix: Optional[NamespacePath] = None, suffix: Optional[NamespacePath] = None, max_depth: Optional[int] = None, limit: int = 100, offset: int = 0) -> list[tuple[str, ...]]`**  
+    Lists namespaces asynchronously based on specified match conditions.  
+    - **Parameters**: Same as `list_namespaces`.  
+    - **Returns**: A list of `NamespacePath` objects.
+
+---
+
+### Item Class
+
+1. **Description**: Represents an individual item stored in the key-value store.  
+   - **Attributes**:
+     - `namespace` (tuple[str, ...]): The hierarchical path to the item's location.
+     - `key` (str): The unique identifier for the item.
+     - `value` (dict[str, Any]): The data stored in the item.
+     - `created_at` (datetime): The timestamp when the item was created.
+     - `updated_at` (datetime): The timestamp when the item was last updated.
