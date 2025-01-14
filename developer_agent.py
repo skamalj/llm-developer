@@ -58,11 +58,12 @@ devflow.add_edge("tools", "agent")
 dev_agent = devflow.compile()
 
 @tool
-def route_to_developer_agent(command_str: str):
+def route_to_developer_agent(command_str: str, work_dir: str):
     """
     Routes a command to the developer agent
     Handles tasks related to code development and testing.
     command_str: Command to tool to execute in natural language 
+    work_dir: Work directory for this project
     """
-    response = dev_agent.invoke({"messages": [{"role": "human", "content": command_str}]})
+    response = dev_agent.invoke({"messages": [{"role": "human", "content": f'{command_str}. Your work directory is {work_dir}'}]})
     return response["messages"][-1].content
