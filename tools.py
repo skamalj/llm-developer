@@ -9,7 +9,7 @@ def execute_command(command: str, capture_output: bool = False) -> str:
     :param capture_output: Boolean to indicate if you need commands output along with status or not.  Command outputs can be expensive to capture, so be cautious and use only when needed.
     :return: The standard output of the command as a stripped string.
     """
-    result = subprocess.run(command, shell=True, stdout=subprocess.PIPE if capture_output else subprocess.DEVNULL, text=True, timeout=20, stderr=subprocess.PIPE)
+    result = subprocess.run(command, shell=True, stdout=subprocess.PIPE if capture_output else subprocess.DEVNULL, text=True, timeout=60, stderr=subprocess.PIPE)
     return result
 
 @tool

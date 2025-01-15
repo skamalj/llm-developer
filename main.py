@@ -19,7 +19,7 @@ supervisor_model = ChatOpenAI(model="gpt-4o", temperature=0)
 tool_node = ToolNode(tools=[route_to_devops_agent, route_to_verifier_agent, route_to_developer_agent, route_to_tester_agent])
 
 # Bind tools to the supervisor model
-supervisor = supervisor_model.bind_tools([route_to_devops_agent, route_to_verifier_agent, route_to_developer_agent])
+supervisor = supervisor_model.bind_tools([route_to_devops_agent, route_to_verifier_agent, route_to_developer_agent, route_to_tester_agent])
 
 # Function to determine the next state
 def should_continue(state: MessagesState) -> str:
@@ -31,23 +31,29 @@ def should_continue(state: MessagesState) -> str:
 # Function to call the supervisor model
 def call_supervisor_model(state: MessagesState):
     system_message = """
-You are a supervisor responsible for ensuring the successful execution and coordination of given task. 
-You will coordinate between the Developer agent (tasked with writing code for the given ask) , Tester agent (tasked with creating and executing test cases), DevOps agent (tasked with creating the environment and installing necessary packages) 
-and the Verifier agent (tasked with verifying if the environment and packages are set up correctly). 
+You are a Supervisor agent responsible for overseeing the successful execution and coordination of the assigned task. Your role involves managing interactions between the following agents:  
 
-Instructions:
-1. Create a plan for the ask by creating tasks for developer agent for developing a code
-2. Create a separate task for developer tester to ensure it test the developed code and has created test cases for it.
-3. Tester must pass the test cases result back to you to close the overall task.
-4. Tester will ask yout help for provisioning of conda environment. 
-    - Ensure that the DevOps agent performs actions to create the environment and install required packages.
-    - After every SUCCESSFUL action by the DevOps agent, route a verification request to the Verifier agent to check the environment's state.
-    - If the Verifier agent identifies issues, relay the feedback to the DevOps agent and prompt it to resolve them.
-5. Do not re-attempt any task more than 5 times.  In case this threshold is met, stop the execution and summarize your status.
-6. Provide clear and concise feedback between the agents to avoid confusion.
-7. Stop only when the Tester agent confirms that the code has been tested successful.
+- **Developer agent**: Responsible for writing code based on the given task.  
+- **Tester agent**: Responsible for creating test cases based on program specifications and executing those test cases.  
+- **DevOps agent**: Responsible for provisioning the environment and installing necessary packages.  
+- **Verifier agent**: Responsible for validating the correctness of the environment and installed packages.  
 
-Be precise and structured in your instructions. Log progress at every step.
+### Instructions:
+1. **Planning**: Develop a detailed plan for the task by assigning responsibilities to the Developer and Tester agents for coding and testing, respectively.  
+2. **Testing Task**: Assign a separate task to the Tester agent to:  
+   - Create test cases based only on the program specifications (without referencing the Developer’s source code).  
+   - Execute the test cases and return the results to you.  
+3. **Environment Setup**:  
+   - Coordinate with the DevOps agent to provision the required Conda environment and install necessary packages.  
+   - After every successful action by the DevOps agent, request the Verifier agent to validate the environment setup.  
+   - If the Verifier identifies issues, relay the feedback to the DevOps agent and ensure corrections are made.  
+4. **Execution Threshold**: Limit the number of retries for any task to a maximum of **five attempts**. If this threshold is reached, stop the execution and summarize the status.  
+5. **Feedback and Coordination**:  
+   - Provide clear, concise, and structured feedback to all agents to avoid miscommunication.  
+   - Log progress at every step of the execution process.  
+6. **Completion**: The task is considered complete only when the Tester agent confirms that the code has been successfully tested.  
+
+Maintain precision and structure throughout the execution. Stop only when all steps have been verified and successfully completed.
 """
 
     messages = state["messages"]
@@ -80,7 +86,11 @@ supervisor_agent = supervisor_graph.compile()
 input_message = {
     "messages": [
         ("human", """
-Write a code for  instructions specified in /home/kamal/dev/llms/langgraph/llm-developer/BaseStore_def.txt. Create the code in /home/kamal/dev/cosmos_store_test
+Write a code for  instructions specified in /home/skamalj/dev/langgraph/llm-developer/BaseStore_def.txt. 
+Project directory to be used for dvelopment and testing: /home/skamalj/dev/cosmos_store_test
+Developer should create source codee in <project_dir>/src/<package_name>
+Tester should write test cases in <project_dr>/tests and use pytest to write test cases.
+Instruct Tester to deploy package being developed in editable mode.
          """)
     ]
 }

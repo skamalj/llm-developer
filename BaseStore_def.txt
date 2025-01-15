@@ -1,23 +1,26 @@
 ### Task: Implement `BaseStore` for Cosmos DB
 
-**Objective**: Implement the `BaseStore` class for Cosmos DB using the Azure Cosmos DB Python SDK.
+**Objective**: Implement the `BaseStore` class for Cosmos DB using the Azure Cosmos DB Python SDK and call the derived calss CosmosDBStore
 
 **Specifications**:  
 - Use the following interfaces from the `langgraph` package:  
   ```python
   from langgraph.store.base import BaseStore, Item, PutOp, Result, SearchItem, NamespacePath, Literal, Op, SearchOp
 
-- Create directory structure appropriate for PyPi package. package name will be 'langgraph_store_cosmosdb'. Use pyproject.toml only for package specification not setup.py
-- Implement all methods of BaseStore, which are described below
-- Use Cosmos DB features such as containers, partition keys, and queries to map these methods effectively.
-- Namespace is passed as a tuple of values ('a', 'b', 'c'), you must convert it to suitable string while saving and back to tuple while reading and returning as Item.
-- created_at must be set only during creation and must not change for updates. This is important when implementing 'put' method which is used for both create and update
-- updated_at must be updated every item update. It will be same as created_at during creation.
-- implement methods in this order put, aput, delete, adelete, get, aget and then rest in any order.
-- Read cosmosdb credentials from environment - COSMOSDB_KEY and COSMOSDB_ENDPOINT
-- Enable creation of cosmosdb database and container if it does not exists.
-- For search and list methods only suopport prefix search.
-- Create this as PyPi package 'langgraph_store_cosmosdb' using pyproject.toml
+### Instructions below til <EOF> are for developer only. Tester should skip this section
+  - Create directory structure appropriate for PyPi package. package name will be 'langgraph_store_cosmosdb'. Use pyproject.toml only for package specification not setup.py
+  - Name the derived class `CosmosDBStore`
+  - Implement all methods of BaseStore, which are described below
+  - Use Cosmos DB features such as containers, partition keys, and queries to map these methods effectively.
+  - Namespace is passed as a tuple of values ('a', 'b', 'c'), you must convert it to suitable string while saving and back to tuple while reading and returning as Item.
+  - created_at must be set only during creation and must not change for updates. This is important when implementing 'put' method which is used for both create and update
+  - updated_at must be updated every item update. It will be same as created_at during creation.
+  - implement methods in this order put, aput, delete, adelete, get, aget and then rest in any order.
+  - Read cosmosdb credentials from environment - COSMOSDB_KEY and COSMOSDB_ENDPOINT
+  - Enable creation of cosmosdb database and container if it does not exists.
+  - For search and list methods only suopport prefix search.
+  - Create this as PyPi package 'langgraph_store_cosmosdb' using pyproject.toml
+<EOF>
 
 ### BaseStore Methods
 

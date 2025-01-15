@@ -61,7 +61,7 @@ dev_agent = devflow.compile()
 def route_to_tester_agent(command_str: str, work_dir: str, code_spec_file: str):
     """
     Routes a command to the tester agent
-    Handles tasks related to code testing.
+    Handles tasks related to creating test cases and executing them.
     :param command_str: Command to tool to execute in natural language 
     :param work_dir: Work directory for this project
     :param code_spec_file: File path where code specification is detailed.
