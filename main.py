@@ -7,6 +7,7 @@ from langgraph.prebuilt import ToolNode
 from devops_agent import route_to_devops_agent
 from verifier import route_to_verifier_agent
 from developer_agent import route_to_developer_agent
+from tester_agent import route_to_tester_agent
 import traceback
 from langchain.schema import SystemMessage
 
@@ -15,7 +16,7 @@ from langchain.schema import SystemMessage
 supervisor_model = ChatOpenAI(model="gpt-4o", temperature=0)
 
 # Initialize the ToolNode with the route to the DevOps agent
-tool_node = ToolNode(tools=[route_to_devops_agent, route_to_verifier_agent, route_to_developer_agent])
+tool_node = ToolNode(tools=[route_to_devops_agent, route_to_verifier_agent, route_to_developer_agent, route_to_tester_agent])
 
 # Bind tools to the supervisor model
 supervisor = supervisor_model.bind_tools([route_to_devops_agent, route_to_verifier_agent, route_to_developer_agent])
@@ -24,27 +25,27 @@ supervisor = supervisor_model.bind_tools([route_to_devops_agent, route_to_verifi
 def should_continue(state: MessagesState) -> str:
     last_message = state["messages"][-1]
     if last_message.tool_calls:
-        return "devops_agent"
+        return "team"
     return END
 
 # Function to call the supervisor model
 def call_supervisor_model(state: MessagesState):
     system_message = """
 You are a supervisor responsible for ensuring the successful execution and coordination of given task. 
-You will coordinate between the Developer agent (tasked with writing code for the given ask) , DevOps agent (tasked with creating the environment and installing necessary packages) 
+You will coordinate between the Developer agent (tasked with writing code for the given ask) , Tester agent (tasked with creating and executing test cases), DevOps agent (tasked with creating the environment and installing necessary packages) 
 and the Verifier agent (tasked with verifying if the environment and packages are set up correctly). 
 
 Instructions:
 1. Create a plan for the ask by creating tasks for developer agent for developing a code
-2. Create a separate task for developer to ensure it test the developed code and has created test cases for it.
-3. Developer must pass the test cases result back to you close the development task.
-4. Developer will ask yout help for provisioning of conda environment. 
+2. Create a separate task for developer tester to ensure it test the developed code and has created test cases for it.
+3. Tester must pass the test cases result back to you to close the overall task.
+4. Tester will ask yout help for provisioning of conda environment. 
     - Ensure that the DevOps agent performs actions to create the environment and install required packages.
     - After every SUCCESSFUL action by the DevOps agent, route a verification request to the Verifier agent to check the environment's state.
     - If the Verifier agent identifies issues, relay the feedback to the DevOps agent and prompt it to resolve them.
 5. Do not re-attempt any task more than 5 times.  In case this threshold is met, stop the execution and summarize your status.
 6. Provide clear and concise feedback between the agents to avoid confusion.
-7. Stop only when the Developer agent confirms that the code has been tested successful.
+7. Stop only when the Tester agent confirms that the code has been tested successful.
 
 Be precise and structured in your instructions. Log progress at every step.
 """
@@ -63,14 +64,14 @@ supervisor_graph = StateGraph(MessagesState)
 
 # Add nodes to the graph
 supervisor_graph.add_node("supervisor", call_supervisor_model)
-supervisor_graph.add_node("devops_agent", tool_node)
+supervisor_graph.add_node("team", tool_node)
 
 # Define edges between nodes
 supervisor_graph.add_edge(START, "supervisor")
 supervisor_graph.add_conditional_edges(
-    "supervisor", should_continue, ["devops_agent", END]
+    "supervisor", should_continue, ["team", END]
 )
-supervisor_graph.add_edge("devops_agent", "supervisor")
+supervisor_graph.add_edge("team", "supervisor")
 
 # Compile the Supervisor Agent
 supervisor_agent = supervisor_graph.compile()

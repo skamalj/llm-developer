@@ -2,7 +2,7 @@
 
 from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI
-from tools import  execute_os_commands, save_file, read_file
+from tools import  execute_os_commands, execute_conda_env_commands, save_file, read_file
 from langgraph.prebuilt import ToolNode
 from langgraph.graph import StateGraph, MessagesState, START, END
 from langgraph.prebuilt import ToolNode
@@ -17,7 +17,7 @@ from langchain.schema import SystemMessage
 model = ChatOpenAI(model="gpt-4o", temperature=0)
 
 # Configure tools
-tools = [execute_os_commands, save_file, read_file]
+tools = [execute_os_commands, execute_conda_env_commands, save_file, read_file]
 
 # Create tool node for LangGraph
 tool_node = ToolNode(tools=tools)
@@ -34,7 +34,7 @@ def should_continue(state: MessagesState) -> str:
 
 def call_model(state: MessagesState):
 
-    with open("developer_prompt.txt", "r", encoding="utf-8") as file:
+    with open("tester_prompt.txt", "r", encoding="utf-8") as file:
         system_message = file.read()
 
         messages = state["messages"]
@@ -58,10 +58,10 @@ devflow.add_edge("tools", "agent")
 dev_agent = devflow.compile()
 
 @tool
-def route_to_developer_agent(command_str: str, work_dir: str, code_spec_file: str):
+def route_to_tester_agent(command_str: str, work_dir: str, code_spec_file: str):
     """
-    Routes a command to the developer agent
-    Handles tasks related to code development and testing.
+    Routes a command to the tester agent
+    Handles tasks related to code testing.
     :param command_str: Command to tool to execute in natural language 
     :param work_dir: Work directory for this project
     :param code_spec_file: File path where code specification is detailed.
