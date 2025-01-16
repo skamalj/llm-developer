@@ -5,10 +5,10 @@ from langchain_openai import ChatOpenAI
 from tools import  execute_os_commands, save_file, read_file
 from langgraph.prebuilt import ToolNode
 from langgraph.graph import StateGraph, MessagesState, START, END
-from langgraph.prebuilt import ToolNode
+from langgraph.prebuilt import ToolNode, InjectedState
 from langchain_core.tools import tool
-from typing import Annotated
 from langchain.schema import SystemMessage
+from typing_extensions import Annotated
 
 
 
@@ -58,13 +58,47 @@ devflow.add_edge("tools", "agent")
 dev_agent = devflow.compile()
 
 @tool
-def route_to_developer_agent(command_str: str, work_dir: str, code_spec_file: str):
+def route_to_developer_agent(command_str: str, 
+                              source_code_directory: str, 
+                              tests_directory: str, 
+                              program_spec_file: str, 
+                              project_root_directory: str,
+                              state: Annotated[dict, InjectedState]) -> str:
     """
-    Routes a command to the developer agent
+    Routes a command to the developer agent.
     Handles tasks related to code development and testing.
-    :param command_str: Command to tool to execute in natural language 
-    :param work_dir: Work directory for this project
-    :param code_spec_file: File path where code specification is detailed.
+    
+    command_str: Command to tool to execute in natural language
+    source_code_directory: Path to the directory where the source code is located
+    tests_directory: Path to the directory where test cases are located
+    program_spec_file: Path to the program specification file
+    project_root_directory: Path to the root directory of the project
+    state: Injected state to persist the project configuration
     """
-    response = dev_agent.invoke({"messages": [{"role": "human", "content": f'{command_str}. Your project directory is {work_dir} and code specification are in {code_spec_file}'}]})
+    
+    # Check if each value exists in state, if not, set them
+    if "source_code_directory" not in state:
+        state["source_code_directory"] = source_code_directory
+    if "tests_directory" not in state:
+        state["tests_directory"] = tests_directory
+    if "program_spec_file" not in state:
+        state["program_spec_file"] = program_spec_file
+    if "project_root_directory" not in state:
+        state["project_root_directory"] = project_root_directory
+    
+    # Use the state values
+    source_code_directory = state.get("source_code_directory", '')
+    tests_directory = state.get("tests_directory", '')
+    program_spec_file = state.get("program_spec_file", '')
+    project_root_directory = state.get("project_root_directory", '')
+    
+    # Adding relevant context to the command string
+    command_str += f"Source Code Directory: {source_code_directory}, " \
+                   f"Tests Directory: {tests_directory}, " \
+                   f"Program Spec File: {program_spec_file}, " \
+                   f"Project Root Directory: {project_root_directory}"
+
+    # Send the command to the Developer agent
+    response = dev_agent.invoke({"messages": [{"role": "human", "content": command_str}]})
+    
     return response["messages"][-1].content
