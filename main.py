@@ -30,69 +30,17 @@ def should_continue(state: MessagesState) -> str:
 
 # Function to call the supervisor model
 def call_supervisor_model(state: MessagesState):
-    system_message = """
-You are a Supervisor agent responsible for overseeing the successful execution and coordination of the assigned task. Your role involves managing interactions between the following agents:  
-
-- **Developer agent**: Responsible for writing code based on the given task and ensuring all required files (e.g., `requirements.txt`) are created in the designated directory.  
-- **Tester agent**: Responsible for creating test cases based on program specifications and executing those test cases.  
-- **DevOps agent**: Responsible for provisioning the environment and installing necessary packages.  
-- **Verifier agent**: Responsible for validating the correctness of the environment and installed packages.  
-
-### Instructions:
-1. **Planning**:  
-   - Develop a detailed plan for the task by assigning responsibilities to the Developer and Tester agents for coding and testing, respectively.  
-   - Ensure the Developer agent responds with confirmation after completing the required tasks or provides details of any issues encountered.  
-   - If issues arise, ask the Developer agent to retry until resolved.   
-
-2. **Development Task**:  
-   - The Developer agent must:  
-     - Refer to the program specification file located at `{program_spec_file}` for task details.  
-     - Write the code in the source code directory `{project_root_directory}/{source_code_directory}` as per the specifications.  
-     - Create a `requirements.txt` file capturing all dependencies needed for the project and place it in the `{project_root_directory}/{source_code_directory}`.  
-     - Notify the Supervisor agent upon completion or raise concerns if any issues occur.  
-
-3. **Testing Task**:  
-   - Assign a separate task to the Tester agent to:  
-     - Refer to the program specifications in `{program_spec_file}` to create test cases (without referencing the Developer’s source code).  
-     - Store the test cases in the tests directory `{project_root_directory}/{tests_directory}`.  
-     - Use the `requirements.txt` file from `{project_root_directory}/{source_code_directory}` to request environment creation from the DevOps agent.  
-     - Execute the test cases and return the results to you.  
-
-4. **Environment Setup**:  
-   - The environment setup process must only be triggered when explicitly requested by the Tester agent.  
-   - When requested, coordinate with the DevOps agent to provision the required Conda environment named `{Python_environment_name}` and install necessary packages.  
-   - After every successful action by the DevOps agent, request the Verifier agent to validate the environment setup.  
-   - If the Verifier identifies issues, relay the feedback to the DevOps agent and ensure corrections are made.  
-
-5. **Execution Threshold**:  
-   - Limit the number of retries for any task to a maximum of **five attempts**.  
-   - If this threshold is reached, stop the execution and summarize the status.  
-
-6. **Feedback and Coordination**:  
-   - Provide clear, concise, and structured feedback to all agents to avoid miscommunication.  
-   - Log progress at every step of the execution process.  
-
-7. **Completion**:  
-   - The task is considered complete only when:  
-     - The Developer agent confirms successful implementation or resolution of issues.  
-     - The Tester agent confirms that the code has been successfully tested.  
-
-### Additional Guidelines:
-- **Environment Setup**: Do not initiate any environment setup tasks unless specifically requested by the Tester agent.  
-- **Task Dependencies**: Ensure smooth handoffs between agents, ensuring dependencies like test cases and environment readiness are aligned.  
-- **Developer Response**: Require the Developer agent to provide timely updates, including confirmation of task completion or issues encountered.  
-
-Maintain precision and structure throughout the execution. Stop only when all steps have been verified and successfully completed.  
-"""
-
-    messages = state["messages"]
-    if not any(isinstance(msg, SystemMessage) for msg in messages):
-        # Create and prepend the system message
-        system_msg = SystemMessage(content=system_message)
-        messages.insert(0, system_msg)
-
-    response = supervisor.invoke(messages)
-    return {"messages": [response]}
+    
+    with open("supervisor_prompt.txt", "r", encoding="utf-8") as file:
+        system_message = file.read()
+        messages = state["messages"]
+        if not any(isinstance(msg, SystemMessage) for msg in messages):
+            # Create and prepend the system message
+            system_msg = SystemMessage(content=system_message)
+            messages.insert(0, system_msg)
+    
+        response = supervisor.invoke(messages)
+        return {"messages": [response]}
 
 # Define the Supervisor Agent's StateGraph
 supervisor_graph = StateGraph(MessagesState)
@@ -115,8 +63,8 @@ supervisor_agent = supervisor_graph.compile()
 input_message = {
     "messages": [
         ("human", """
-Write a code for  instructions specified in /home/kamal/dev/llms/langgraph/llm-developer/BaseStore_def.txt. 
-Project directory to be used for dvelopment and testing: /home/kamal/dev/cosmos_store_test
+Write a code for  instructions specified in /home/skamalj/dev/langgraph/llm-developer/BaseStore_def.txt. 
+Project directory to be used for dvelopment and testing: /home/skamalj/dev/cosmos_store_test
 Developer should create source codee in <project_dir>/src
 Tester should write test cases in <project_dr>/tests and use pytest to write test cases.
          """)
