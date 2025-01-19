@@ -23,13 +23,17 @@ def execute_os_commands(commands: list, capture_output: bool = False) -> list:
     """
     return [(command, execute_command(command, capture_output)) for command in commands]
 
-@tool 
+@tool
 def execute_conda_env_commands(env_name: str, commands: list, capture_output: bool = False) -> list:
     """
-    Execute list of commands which needs to be executed in a particular conda environment
-    :param env_name: Environment in which commands are to be executed
-    :param capture_output: Boolean to indicate if you need commands output along with status or not.  Command outputs can be expensive to capture, so be cautious and use only when needed.
-    :return: A list of tuples containing the command and its execution result.
+    Executes a list of commands in a specified conda environment.
+
+    :param env_name: The conda environment in which the commands are executed.
+    :param commands: A list of commands to be executed.
+    :param capture_output: Set to True to capture command output, useful where output needs to be analyzed. 
+                           By default, the return code and error message (if any) are captured. So mostly default setting should work.
+                           Enable verbose output only when necessary to avoid overhead.
+    :return: A list of tuples, each containing the command and its execution result.
     """
     env_prefix = f'conda run -n {env_name} '
     return [(command, execute_command(env_prefix + command, capture_output)) for command in commands]
@@ -62,6 +66,14 @@ def read_file(file_path: str) -> str:
             return file.read()
     except Exception as e:
         return str(e)
+    
 
+@tool
+def ask_user_input(issue_summary: str) -> str:
+    """
+    Asks the user for help on issue which happens for more than 2 times.
 
-
+    :param prompt: The question or statement to present to the user.
+    :return: The user's input as a string.
+    """
+    return input(issue_summary)

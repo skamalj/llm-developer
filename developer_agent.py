@@ -9,7 +9,7 @@ from langgraph.prebuilt import ToolNode, InjectedState
 from langchain_core.tools import tool
 from langchain.schema import SystemMessage
 from typing_extensions import Annotated
-
+from langgraph_checkpoint_cosmosdb import CosmosDBSaver
 
 
 # Initialize the Anthropic model
@@ -25,6 +25,7 @@ tool_node = ToolNode(tools=tools)
 # @! bind tools to model
 model_with_tools  = model.bind_tools(tools)
 
+saver = CosmosDBSaver(database_name='builderdb', container_name='checkpoint')
 # Create a state graph for the agent
 def should_continue(state: MessagesState) -> str:
     last_message = state['messages'][-1]
@@ -55,7 +56,7 @@ devflow.add_edge(START, "agent")
 devflow.add_conditional_edges("agent", should_continue, ["tools", END])
 devflow.add_edge("tools", "agent")
 
-dev_agent = devflow.compile()
+dev_agent = devflow.compile(checkpointer=saver)
 
 @tool
 def route_to_developer_agent(command_str: str, 
@@ -98,7 +99,8 @@ def route_to_developer_agent(command_str: str,
                    f"Program Spec File: {program_spec_file}, " \
                    f"Project Root Directory: {project_root_directory}"
 
+    config = {"configurable": {"thread_id": "115"}}
     # Send the command to the Developer agent
-    response = dev_agent.invoke({"messages": [{"role": "human", "content": command_str}]})
+    response = dev_agent.invoke({"messages": [{"role": "human", "content": command_str}]}, config)
     
     return response["messages"][-1].content

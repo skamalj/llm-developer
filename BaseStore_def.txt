@@ -10,14 +10,14 @@
 ### Developer Instructions (Tester should skip this section)
 
 1. **Class Naming**:  
-   - Create a derived class named `CosmosDBStore`.  
+   - Create a derived class named `CosmosDBStore` and name the file cosmos_store.py  
 
 2. **Method Implementation**:  
    - Implement all methods defined in the `BaseStore` specification.  
    - Use Cosmos DB features such as containers, partition keys, and queries to map these methods effectively.  
 
 3. **Namespace Handling**:  
-   - When saving, convert the `namespace` (a tuple of values, e.g., `('a', 'b', 'c')`) into a suitable string.  
+   - When saving, convert the `namespace` (a tuple of values, e.g., `('a', 'b', 'c')`) into a suitable concatenated string of elements with '-'.  
    - When reading, convert the string back to a tuple and return it as part of the item.  
 
 4. **Timestamps**:  
@@ -35,8 +35,12 @@
 7. **Search and List Methods**:  
    - Support only prefix-based searches for these methods.  
 
+8. **Supported operations for batch and abatch**
+   - GetOp
+   - PutOp
 
-### BaseStore Methods
+
+### BaseStore Class and Methods
 
 1. **`batch(ops: Iterable[Op]) -> list[Result]`**  
    Executes multiple operations synchronously in a single batch.  
@@ -87,10 +91,15 @@
       - `offset`: Number of results to skip (default: 0).
     - **Returns**: A list of `NamespacePath` objects
 
+7. **`async abatch(ops: Iterable[Op]) -> list[Result]`**  
+   Executes multiple operations asynchronously in a single batch.  
+   - **Parameters**:
+     - `ops`: An iterable of `Op` objects specifying the operations to perform.
+   - **Returns**: A list of `Result` objects representing the outcome of each operation.
+
 ---
 
 ### Item Class 
-
 1. **Description**: Represents an individual item stored in the key-value store.  
    - **Attributes**:
      - `namespace` (tuple[str, ...]): The hierarchical path to the item's location.
@@ -98,3 +107,32 @@
      - `value` (dict[str, Any]): The data stored in the item.
      - `created_at` (datetime): The timestamp when the item was created.
      - `updated_at` (datetime): The timestamp when the item was last updated.
+
+### SearchItem Class 
+1. **Description**: Represents an item returned from a search operation.  
+   - **Attributes**:
+     - `namespace` (tuple[str, ...]): The hierarchical path to the item's location.
+     - `key` (str): The unique identifier for the item.
+     - `value` (dict[str, Any]): The data stored in the item.
+     - `created_at` (datetime): The timestamp when the item was created.
+     - `updated_at` (datetime): The timestamp when the item was last updated.
+
+### Result definition
+Result = Union[Item, list[Item], list[SearchItem], list[tuple[str, ...]], None]
+
+### Op definition
+Op = Union[GetOp, SearchOp, PutOp, ListNamespacesOp]
+
+### PutOp Class definition
+**Description**: This class represents a single operation to modify the store's contents, whether adding new items, updating existing ones, or removing them.
+- **Attributes**:
+   - - `namespace` (tuple[str, ...]): The hierarchical path to the item's location.
+     - `key` (str): The unique identifier for the item.
+     - `value` (dict[str, Any]): The data stored in the item. Setting this to None signals that the item should be deleted, indicating `delete` operation
+
+### GetOp Class definition
+**Description**: Operation to retrieve a specific item by its namespace and key..
+- **Attributes**:
+   - - `namespace` (tuple[str, ...]): The hierarchical path to the item's location.
+     - `key` (str): The unique identifier for the item.
+    

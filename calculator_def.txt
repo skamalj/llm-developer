@@ -1,0 +1,2 @@
+Create a basic calculator in python. Project uses python 3.10
+Implement functionality add, subtract, multiply, div, mod, exponent and log

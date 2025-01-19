@@ -12,8 +12,8 @@ import traceback
 from langchain.schema import SystemMessage
 
 # Initialize the Supervisor's model
-supervisor_model = ChatAnthropic(model="claude-3-opus-20240229", temperature=0)
-#supervisor_model = ChatOpenAI(model="gpt-4o", temperature=0)
+#supervisor_model = ChatAnthropic(model="claude-3-opus-20240229", temperature=0)
+supervisor_model = ChatOpenAI(model="gpt-4", temperature=0)
 
 # Initialize the ToolNode with the route to the DevOps agent
 tool_node = ToolNode(tools=[route_to_devops_agent, route_to_verifier_agent, route_to_developer_agent, route_to_tester_agent])
@@ -38,7 +38,6 @@ def call_supervisor_model(state: MessagesState):
             # Create and prepend the system message
             system_msg = SystemMessage(content=system_message)
             messages.insert(0, system_msg)
-    
         response = supervisor.invoke(messages)
         return {"messages": [response]}
 
@@ -63,8 +62,8 @@ supervisor_agent = supervisor_graph.compile()
 input_message = {
     "messages": [
         ("human", """
-Write a code for  instructions specified in /home/skamalj/dev/langgraph/llm-developer/BaseStore_def.txt. 
-Project directory to be used for dvelopment and testing: /home/skamalj/dev/cosmos_store_test
+Write a code for  instructions specified in /home/kamal/dev/llms/langgraph/llm-developer/BaseStore_def.txt. Project will use python 3.10
+Project directory to be used for dvelopment and testing: /home/kamal/dev/cosmos_store_test
 Developer should create source codee in <project_dir>/src
 Tester should write test cases in <project_dr>/tests and use pytest to write test cases.
          """)
@@ -73,7 +72,7 @@ Tester should write test cases in <project_dr>/tests and use pytest to write tes
 
 # Stream and process the output
 try:
-    for chunk in supervisor_agent.stream(input_message, subgraphs=True, stream_mode="values" , config={"recursion_limit": 50}):
+    for chunk in supervisor_agent.stream(input_message, subgraphs=True, stream_mode="values" , config={"recursion_limit": 30}):
         # Extract the last message from the chunk
         message = chunk[1]["messages"][-1]
         if isinstance(message, tuple):
