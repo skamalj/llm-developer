@@ -1,25 +1,26 @@
-from typing import Literal
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from langgraph.graph import StateGraph, MessagesState, START, END
-from langgraph.types import Command
 from langgraph.prebuilt import ToolNode
 from devops_agent import route_to_devops_agent
 from verifier import route_to_verifier_agent
 from developer_agent import route_to_developer_agent
 from tester_agent import route_to_tester_agent
+from tools import ask_user_input
 import traceback
 from langchain.schema import SystemMessage
+from utils import handle_tool_calls
 
 # Initialize the Supervisor's model
-#supervisor_model = ChatAnthropic(model="claude-3-opus-20240229", temperature=0)
-supervisor_model = ChatOpenAI(model="gpt-4", temperature=0)
+supervisor_model = ChatAnthropic(model="claude-3-opus-20240229", temperature=0)
+#supervisor_model = ChatOpenAI(model="gpt-4", temperature=0)
 
+tools = [ask_user_input, route_to_devops_agent, route_to_verifier_agent, route_to_developer_agent, route_to_tester_agent]
 # Initialize the ToolNode with the route to the DevOps agent
-tool_node = ToolNode(tools=[route_to_devops_agent, route_to_verifier_agent, route_to_developer_agent, route_to_tester_agent])
+tool_node = ToolNode(tools=tools)
 
 # Bind tools to the supervisor model
-supervisor = supervisor_model.bind_tools([route_to_devops_agent, route_to_verifier_agent, route_to_developer_agent, route_to_tester_agent])
+supervisor = supervisor_model.bind_tools(tools)
 
 # Function to determine the next state
 def should_continue(state: MessagesState) -> str:
@@ -33,7 +34,7 @@ def call_supervisor_model(state: MessagesState):
     
     with open("supervisor_prompt.txt", "r", encoding="utf-8") as file:
         system_message = file.read()
-        messages = state["messages"]
+        messages = handle_tool_calls(state["messages"])
         if not any(isinstance(msg, SystemMessage) for msg in messages):
             # Create and prepend the system message
             system_msg = SystemMessage(content=system_message)
@@ -63,7 +64,7 @@ input_message = {
     "messages": [
         ("human", """
 Write a code for  instructions specified in /home/kamal/dev/llms/langgraph/llm-developer/BaseStore_def.txt. Project will use python 3.10
-Project directory to be used for dvelopment and testing: /home/kamal/dev/cosmos_store_test
+Project directory to be used for dvelopment and testing: /home/kamal/dev/cosmos_store_env
 Developer should create source codee in <project_dir>/src
 Tester should write test cases in <project_dr>/tests and use pytest to write test cases.
          """)

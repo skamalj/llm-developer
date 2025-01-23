@@ -8,6 +8,7 @@ from langgraph.graph import StateGraph, MessagesState, START, END
 from langgraph.prebuilt import ToolNode
 from langchain_core.tools import tool
 from typing import Annotated
+from utils import handle_tool_calls
 
 
 # Initialize the Anthropic model
@@ -31,7 +32,7 @@ def should_continue(state: MessagesState) -> str:
     return END
 
 def call_model(state: MessagesState):
-    messages = state["messages"]
+    messages = handle_tool_calls(state["messages"])
     response = model_with_tools.invoke(messages)
     return {"messages": [response]}
 

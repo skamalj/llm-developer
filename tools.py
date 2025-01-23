@@ -1,16 +1,5 @@
 from langchain_core.tools import tool
-import subprocess
-
-def execute_command(command: str, capture_output: bool = False) -> str:
-    """
-    Executes a shell command and returns its output as a string.
-
-    :param command: A string representing the shell command to execute.
-    :param capture_output: Boolean to indicate if you need commands output along with status or not.  Command outputs can be expensive to capture, so be cautious and use only when needed.
-    :return: The standard output of the command as a stripped string.
-    """
-    result = subprocess.run(command, shell=True, stdout=subprocess.PIPE if capture_output else subprocess.DEVNULL, text=True, timeout=60, stderr=subprocess.PIPE)
-    return result
+from utils import execute_command
 
 @tool
 def execute_os_commands(commands: list, capture_output: bool = False) -> list:
@@ -77,3 +66,32 @@ def ask_user_input(issue_summary: str) -> str:
     :return: The user's input as a string.
     """
     return input(issue_summary)
+
+@tool
+def update_file_content(file_path: str, content: str, start_line: int = None, end_line: int = None) -> str:
+    """
+    Updates the content of a file at specified line range or appends if no range is given.
+
+    :param file_path: Path to the file to be updated.
+    :param content: Content to be inserted into the file.
+    :param start_line: Optional; starting line number for content insertion.
+    :param end_line: Optional; ending line number for content insertion.
+    :return: Success message or error message if an exception occurs.
+    """
+    try:
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+
+        if start_line is not None and end_line is not None:
+            lines[start_line:end_line] = [content + '\n']
+        elif start_line is not None:
+            lines[start_line:start_line] = [content + '\n']
+        else:
+            lines.append(content + '\n')
+
+        with open(file_path, 'w') as file:
+            file.writelines(lines)
+
+        return 'File updated successfully'
+    except Exception as e:
+        return f'Error updating file: {str(e)}'

@@ -14,8 +14,8 @@ from langgraph_checkpoint_cosmosdb import CosmosDBSaver
 
 
 # Initialize the Anthropic model
-#model = ChatAnthropic(model="claude-3-opus-20240229", temperature=0)
-model = ChatOpenAI(model="gpt-4o", temperature=0)
+model = ChatAnthropic(model="claude-3-opus-20240229", temperature=0)
+#model = ChatOpenAI(model="gpt-4o", temperature=0)
 
 
 # Configure tools
@@ -57,7 +57,7 @@ devflow.add_edge(START, "agent")
 devflow.add_conditional_edges("agent", should_continue, ["tools", END])
 devflow.add_edge("tools", "agent")
 
-dev_agent = devflow.compile(checkpointer=saver)
+dev_agent = devflow.compile()
 
 @tool
 def route_to_tester_agent(command_str: str, 
@@ -106,8 +106,7 @@ def route_to_tester_agent(command_str: str,
                    f"Program Spec File: {program_spec_file}, " \
                    f"Project Root Directory: {project_root_directory}"
 
-    config = {"configurable": {"thread_id": "225"}}
     # Send the command to the Tester agent
-    response = dev_agent.invoke({"messages": [{"role": "human", "content": command_str}]},config)
+    response = dev_agent.invoke({"messages": [{"role": "human", "content": command_str}]})
     
     return response["messages"][-1].content

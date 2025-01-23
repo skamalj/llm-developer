@@ -10,6 +10,7 @@ from langchain_core.tools import tool
 from langchain.schema import SystemMessage
 from typing_extensions import Annotated
 from langgraph_checkpoint_cosmosdb import CosmosDBSaver
+from utils import handle_tool_calls
 
 
 # Initialize the Anthropic model
@@ -38,7 +39,7 @@ def call_model(state: MessagesState):
     with open("developer_prompt.txt", "r", encoding="utf-8") as file:
         system_message = file.read()
 
-        messages = state["messages"]
+        messages = messages = handle_tool_calls(state["messages"])
         if not any(isinstance(msg, SystemMessage) for msg in messages):
             # Create and prepend the system message
             system_msg = SystemMessage(content=system_message)
@@ -56,7 +57,7 @@ devflow.add_edge(START, "agent")
 devflow.add_conditional_edges("agent", should_continue, ["tools", END])
 devflow.add_edge("tools", "agent")
 
-dev_agent = devflow.compile(checkpointer=saver)
+dev_agent = devflow.compile()
 
 @tool
 def route_to_developer_agent(command_str: str, 
@@ -99,8 +100,7 @@ def route_to_developer_agent(command_str: str,
                    f"Program Spec File: {program_spec_file}, " \
                    f"Project Root Directory: {project_root_directory}"
 
-    config = {"configurable": {"thread_id": "115"}}
     # Send the command to the Developer agent
-    response = dev_agent.invoke({"messages": [{"role": "human", "content": command_str}]}, config)
+    response = dev_agent.invoke({"messages": [{"role": "human", "content": command_str}]})
     
     return response["messages"][-1].content
